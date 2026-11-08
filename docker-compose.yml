@@ -1,0 +1,33 @@
+services:
+  slate:
+    image: slate:latest
+    build: .
+    container_name: slate
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      - slate-data:/data
+    environment:
+      # Set these for production behind your reverse proxy:
+      - APP_ORIGIN=${APP_ORIGIN:-http://localhost:3000}
+      # ORIGIN is required by the Node server for form-POST origin checks; keep it equal to APP_ORIGIN.
+      - ORIGIN=${APP_ORIGIN:-http://localhost:3000}
+      - RP_ID=${RP_ID:-localhost}
+      # Optional: derive the credential-encryption key from a secret you control.
+      # If unset, a key file is auto-generated at /data/secret.key.
+      - APP_SECRET=${APP_SECRET:-}
+      - SESSION_DAYS=${SESSION_DAYS:-30}
+      - CACHE_MAX_MB=${CACHE_MAX_MB:-2048}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - TRUST_PROXY=${TRUST_PROXY:-0}
+      - MAX_ATTACHMENT_MB=${MAX_ATTACHMENT_MB:-25}
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+volumes:
+  slate-data:
